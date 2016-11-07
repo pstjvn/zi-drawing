@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, user-scalable=yes">
+
+    <title>zi-drawing demo</title>
+
+    <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+
+    <link rel="import" href="../../iron-demo-helpers/demo-pages-shared-styles.html">
+    <link rel="import" href="../../iron-demo-helpers/demo-snippet.html">
+    <link rel="import" href="../zi-drawing.html">
+    <link rel="import" href="../zi-drawing-tester.html">
+
+    <style is="custom-style" include="demo-pages-shared-styles">
+    </style>
+  </head>
+  <body>
+    <div class="vertical-section-container centered">
+      <h3>Basic zi-drawing demo</h3>
+      <demo-snippet>
+        <template>
+          <zi-drawing>
+            <svg viewBox="0 0 40 40" version="1.1"
+                xmlns="http://www.w3.org/2000/svg"
+                xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve">
+              <path style="fill: none; stroke-width: 2px; stroke: black;"
+                  d="M8.583,18.75L17.292 27.458 31.834 12.917 "></path>
+            </svg>
+          </zi-drawing>
+        </template>
+      </demo-snippet>
+      <h3>Drawing tester</h3>
+      <demo-snippet>
+        <template>
+          <zi-drawing-tester></zi-drawing-tester>
+        </template>
+      </demo-snippet>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,133 @@
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../iron-flex-layout/iron-flex-layout-classes.html">
+<link rel="import" href="../iron-icon/iron-icon.html">
+<link rel="import" href="../iron-icons/iron-icons.html">
+<link rel="import" href="../iron-icons/maps-icons.html">
+<link rel="import" href="../paper-button/paper-button.html">
+<link rel="import" href="../paper-input/paper-input.html">
+<link rel="import" href="../paper-input/paper-textarea.html">
+<link rel="import" href="../paper-slider/paper-slider.html">
+<link rel="import" href="zi-drawing.html">
+
+<!--
+`zi-drawing`
+Uses SVG as a drawing, incremenatlly appearing on screen
+
+@demo demo/tester.html
+-->
+<dom-module id="zi-drawing-tester">
+  <template>
+    <style include="iron-flex"></style>
+    <style include="iron-flex-alignment"></style>
+    <style>
+      :host {
+        display: block;
+        width: 90%;
+        padding: 15px;
+        border-radius: 2px;
+        box-shadow: 0 3px 4px 0 rgba(0, 0, 0, 0.14),
+                  0 1px 8px 0 rgba(0, 0, 0, 0.12),
+                  0 3px 3px -2px rgba(0, 0, 0, 0.4);
+      }
+
+      .container {
+        padding: 8px 0 8px 0;
+      }
+
+      h3 {
+        text-align: center;
+      }
+
+      zi-drawing {
+        margin: auto;
+        display: block;
+        width: 100px;
+        height: 100px;
+        border: 1px solid rgba(0,0,0,0.1);
+      }
+
+      paper-slider {
+        width: 100%;
+      }
+    </style>
+    <h3>Test your svg drawing!</h3>
+    <zi-drawing id="drawing" auto animation-duration="[[numberduration]]" animation-progress="{{forceprogress}}"></zi-drawing>
+    <div>
+      <paper-slider min="0" max="1" step="0.01" value="[[forceprogress]]" immediate-value="{{forceprogress}}"></paper-slider>
+      <paper-input type="number" label="Animation duration in ms" min="100" max="10000" value="{{strduration}}"></paper-input>
+      <paper-textarea id="textarea" label="Paste your SVG markup here"></paper-textarea>
+      <div class="horizontal around-justified layout container">
+        <paper-button id="button" on-tap="loadExample">
+          <iron-icon icon="icons:content-copy"></iron-icon>
+          &nbsp;Load example
+        </paper-button>
+        <paper-button id="button" on-tap="onPlay">
+          <iron-icon icon="maps:directions-run"></iron-icon>
+          &nbsp;Play
+        </paper-button>
+        <paper-button id="button" on-tap="onUpdate">
+          <iron-icon icon="icons:update"></iron-icon>
+          &nbsp;Update
+        </paper-button>
+      </div>
+    </div>
+  </template>
+  <script>
+    Polymer({
+      is: 'zi-drawing-tester',
+      properties: {
+        strduration: {
+          type: Number,
+          value: '1000',
+          observer: '_convertToNumber'
+        },
+        numberduration: {
+          type: Number,
+          value: 1000
+        },
+        forceprogress: {
+          type: Number,
+          value: 0
+        }
+      },
+
+      onUpdate: function() {
+        if (this.svg) {
+          Polymer.dom(this.$.drawing).removeChild(this.svg);
+        }
+        var svg = this._getSvgElemenFromString(this.$.textarea.value);
+        if (svg) {
+          svg.setAttribute('width', '100%');
+          svg.setAttribute('height', '100%');
+          this.svg = svg;
+          Polymer.dom(this.$.drawing).appendChild(this.svg);
+        } else {
+          this.svg = null;
+        }
+      },
+
+      onPlay: function() {
+        this.$.drawing.playAnimation();
+      },
+
+      loadExample: function() {
+        this.$.textarea.value = `
+        <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 40 40" xml:space="preserve">
+          <path style="fill: none; stroke-width: 2px; stroke: red;" d="M8.583,18.75L17.292 27.458 31.834 12.917 "></path>
+        </svg>`;
+        this.onUpdate();
+      },
+
+      _convertToNumber: function(val) {
+        this.numberduration = +val;
+      },
+
+      _getSvgElemenFromString: function(str) {
+        var div = document.createElement('div');
+        div.innerHTML = str;
+        var svg = div.firstElementChild;
+        return svg || null;
+      }
+    });
+  </script>
+</dom-module>

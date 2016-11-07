@@ -1,0 +1,205 @@
+<link rel="import" href="../polymer/polymer.html">
+
+<script>
+  (function() {
+    /**
+     * Helper class that represents a runnable animation / timeline.
+     * @private
+     */
+    class AnimationTimeline {
+      /**
+       * @param {number} duration
+       * @param {function(number):void} callback
+       */
+      constructor(duration, callback) {
+        /** @const {number} */
+        this.duration = duration;
+        /** @const {function(number):void} */
+        this.callback = callback;
+        /** @private {number} */
+        this.startTime = 0;
+        /** @private {boolean} */
+        this.playing = false;
+        /** @private {boolean} */
+        this.waiting = false;
+        /** @private {number} */
+        this.progress = 1;
+        /** @private {function(number):void} */
+        this._bound = this._onTick.bind(this);
+      }
+
+      /**
+       * Sets the progress of the animation, it also stops it at that progress
+       * point.
+       *
+       * @param {number} progress Between 0 and 1.
+       */
+      setProgress(progress) {
+        this.playing = false;
+        this.progress = progress;
+        this.tick();
+      }
+
+      /**
+       * Called when we need to move the animation forward.
+       *
+       * @protected
+       */
+      tick() {
+        if (!this.waiting) {
+          this.waiting = true;
+          new Promise(this._helper).then(this._bound);
+        }
+      }
+
+      /**
+       * Starts the playback of the animation if it is not yet started.
+       */
+      play() {
+        if (!this.playing) {
+          this.playing = true;
+          if (this.progress != 1) {
+            this.startTime = window.performance.now() - (this.duration * this.progress);
+          } else {
+            this.progress = 0;
+            this.startTime = window.performance.now();
+          }
+          this.tick();
+        }
+      }
+
+      /**
+       * Pauses the animation if running.
+       */
+      pause() {
+        this.playing = false;
+      }
+
+      /**
+       * Resumes the animation.
+       *
+       * If it is not paused it will start from the start.
+       */
+      resume() {
+        this.play();
+      }
+
+      /**
+       * Stops playback if running.
+       */
+      stop() {
+        this.setProgress(1);
+      }
+
+      /**
+       * Helper function to use RAF as a promise.
+       *
+       * @private
+       * @param {function(?):?} resolve
+       * @param {function(?):?} reject
+       */
+      _helper(resolve, reject) {
+        window.requestAnimationFrame(resolve);
+      }
+
+      /**
+       * Handler of the tick handler synced to RAF.
+       *
+       * @private
+       * @param {number} ts
+       */
+      _onTick(ts) {
+        this.waiting = false;
+        if (this.playing) {
+          this.progress = (ts - this.startTime) / this.duration;
+          if (this.progress >= 1) {
+            this.playing = false;
+            this.progress = 1;
+          } else {
+            this.tick();
+          }
+        }
+        this.callback(this.progress);
+      }
+    }
+
+    /**
+     * @polymerBehavior Polymer.ziAnimationBehavior
+     */
+    Polymer.ziAnimationBehavior = {
+      properties: {
+        /**
+         * The animation current progress, from 0 to 1.
+         */
+        animationProgress: {
+          type: Number,
+          value: 1,
+          notify: true,
+          observer: '_onAnimationProgressChange'
+        },
+        /**
+         * Indicates if the animation is currently running
+         */
+        animationRunning: {
+          type: Boolean,
+          value: false,
+          notify: true,
+          reflect: true
+        },
+        /**
+         * Allows to control the animation duration from outside the component
+         * that is being animated.
+         */
+        animationDuration: {
+          type: Number,
+          value: 1000,
+          observer: '_onAnimationDurationChange'
+        }
+      },
+
+      _onAnimationDurationChange: function(duration) {
+        console.log('B:duration changed', typeof duration, this.animationDuration);
+        if (this.animationTimeline) {
+          this.animationTimeline.stop();
+        }
+        this.animationTimeline = new AnimationTimeline(duration, this._onAnimationTimelineTick.bind(this));
+      },
+
+      _onAnimationProgressChange: function(value) {
+        console.log('Animation progress change', value);
+        if (!this.animationRunning && this.animationTimeline) {
+          console.log('Animation not running, update progress directly');
+          this.animationTimeline.setProgress(value);
+        }
+      },
+
+      _onAnimationTimelineTick: function(progress) {
+        if (progress == 1) {
+          this.animationRunning = false;
+        }
+        this.animationProgress = progress;
+        if (this.onAnimationTick) this.onAnimationTick(progress);
+      },
+
+      /**
+       * Utility method: starts the animation or unpauses it.
+       */
+      playAnimation: function() {
+        this.animationRunning = true;
+        this.animationTimeline.play();
+      },
+
+      /** Pauses a running animation. */
+      pauseAnimaition: function() {
+        this.animationRunning = false;
+        this.animationTimeline.pause();
+      },
+
+      /** Stops the running animation. */
+      stopAnimation: function() {
+        this.animationRunning = false;
+        this.animationTimeline.stop();
+      }
+    }
+  })();
+</script>

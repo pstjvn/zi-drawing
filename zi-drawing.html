@@ -1,0 +1,133 @@
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="zi-animation-behavior.html">
+
+<!--
+`zi-drawing`
+Uses SVG as a drawing, incremenatlly appearing on screen
+
+@demo demo/index.html
+-->
+
+<dom-module id="zi-drawing">
+  <template>
+    <style>
+      :host {
+        display: block;
+      }
+    </style>
+    <content id="contentBlock"></content>
+  </template>
+  <script>
+    (function() {
+      class PathInfo {
+        /** @param {!SVGPathElement} path */
+        constructor(path) {
+          /** @protected {!SVGPathElement} */
+          this.element = path;
+          /** @type {number} */
+          this.length = this.element.getTotalLength();
+          /** @private {number} */
+          this.offset = 0;
+          /** @private {boolean} */
+          this.visible = true;
+          this.element.style.strokeDasharray = `${this.length} ${this.length}`;
+        }
+
+        /** @param {number} offset */
+        setOffset(offset) {
+          if (this.offset != offset) {
+            this.offset = offset;
+            this.setVisible(offset < this.length);
+            this.element.style.strokeDashoffset = this.offset.toString();
+          }
+        }
+
+        /** @param {boolean} visible */
+        setVisible(visible) {
+          if (this.visible != visible) {
+            this.visible = visible;
+            this.element.style.display = visible ? '' : 'none';
+          }
+        }
+      }
+
+      class SvgInfo {
+        /** @param {!SVGElement} */
+        constructor(svg) {
+          /** @protected {!SVGElement} */
+          this.element = svg;
+          /** @private {!Array<PathInfo>} */
+          this.paths = [];
+          /** @private {number} */
+          this.length = 0;
+          Array.from(this.element.querySelectorAll('path')).forEach((path) => {
+            let instance = new PathInfo(path);
+            this.paths.push(instance);
+            this.length += instance.length;
+          });
+        }
+
+        /** @param {number} progress */
+        setProgress(progress) {
+          let desiredLength = this.length * progress;
+          let len = 0;
+          this.paths.forEach((path) => {
+            if (len + path.length <= desiredLength) {
+              path.setOffset(0.0);
+            } else if (len + path.length > desiredLength && len < desiredLength) {
+              path.setOffset(path.length - (desiredLength - len));
+            } else {
+              path.setOffset(path.length);
+            }
+            len += path.length;
+          });
+        }
+      }
+
+      Polymer({
+        is: 'zi-drawing',
+        behaviors: [Polymer.ziAnimationBehavior],
+        properties: {
+          /**
+           * If set to true will animate the drawing right after it is inserterd
+           * in the DOM.
+           */
+          auto: {
+            type: Boolean
+          }
+        },
+
+        ready: function() {
+          this._svg = null;
+          this._observer = Polymer.dom(this.$.contentBlock).observeNodes((info) => {
+            if (this._svg) {
+              this.stopAnimation();
+            }
+            if (info.addedNodes[0].tagName.toUpperCase() == 'SVG') {
+              this.importSvg(info.addedNodes[0]);
+              if (this.auto) this.playAnimation();
+            }
+          });
+          console.log(this.queryEffectiveChildren('svg'));
+        },
+
+        importSvg: function(node) {
+          this._svg = new SvgInfo(node);
+        },
+
+        attached: function() {
+
+        },
+
+        onAnimationTick: function(progress) {
+          if (this._svg) this._svg.setProgress(progress);
+        }
+      });
+    })();
+  </script>
+  <!-- test code
+  <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="100%" height="100%" viewBox="0 0 40 40" enable-background="new 0 0 40 40" xml:space="preserve">
+              <path style="fill: none; stroke-width: 2px; stroke: red;" d="M8.583,18.75L17.292 27.458 31.834 12.917 "></path>
+            </svg>
+  -->
+</dom-module>
