@@ -1,4 +1,5 @@
 <link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../polymer/lib/utils/flattened-nodes-observer.html">
 <link rel="import" href="zi-animation-behavior.html">
 
 <!--
@@ -15,7 +16,7 @@ Uses SVG as a drawing, incremenatlly appearing on screen
         display: block;
       }
     </style>
-    <content id="contentBlock"></content>
+    <slot id="content" name="svg"></slot>
   </template>
   <script>
     (function() {
@@ -94,29 +95,32 @@ Uses SVG as a drawing, incremenatlly appearing on screen
            */
           auto: {
             type: Boolean
+          },
+
+          /** The observer to use to monitor child nodes in the slot. */
+          _observer: {
+            type: Object
           }
         },
 
         ready: function() {
           this._svg = null;
-          this._observer = Polymer.dom(this.$.contentBlock).observeNodes((info) => {
+          this._observer = new Polymer.FlattenedNodesObserver(this.$.content, (info) => {
             if (this._svg) {
               this.stopAnimation();
+              this._svg = null;
             }
-            if (info.addedNodes[0].tagName.toUpperCase() == 'SVG') {
-              this.importSvg(info.addedNodes[0]);
-              if (this.auto) this.playAnimation();
+            if (info.addedNodes.length == 1) {
+              if (info.addedNodes[0].tagName.toLowerCase() == 'svg') {
+                this.importSvg(info.addedNodes[0]);
+                if (this.auto) this.playAnimation();
+              }
             }
           });
-          console.log(this.queryEffectiveChildren('svg'));
         },
 
         importSvg: function(node) {
           this._svg = new SvgInfo(node);
-        },
-
-        attached: function() {
-
         },
 
         onAnimationTick: function(progress) {

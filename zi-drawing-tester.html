@@ -99,6 +99,7 @@ Uses SVG as a drawing, incremenatlly appearing on screen
         if (svg) {
           svg.setAttribute('width', '100%');
           svg.setAttribute('height', '100%');
+          svg.setAttribute('slot', 'svg');
           this.svg = svg;
           Polymer.dom(this.$.drawing).appendChild(this.svg);
         } else {
