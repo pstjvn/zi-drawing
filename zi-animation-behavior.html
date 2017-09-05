@@ -158,7 +158,6 @@
       },
 
       _onAnimationDurationChange: function(duration) {
-        console.log('B:duration changed', typeof duration, this.animationDuration);
         if (this.animationTimeline) {
           this.animationTimeline.stop();
         }
@@ -166,9 +165,7 @@
       },
 
       _onAnimationProgressChange: function(value) {
-        console.log('Animation progress change', value);
         if (!this.animationRunning && this.animationTimeline) {
-          console.log('Animation not running, update progress directly');
           this.animationTimeline.setProgress(value);
         }
       },
