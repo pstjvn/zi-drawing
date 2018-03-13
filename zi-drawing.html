@@ -105,18 +105,26 @@ Uses SVG as a drawing, incremenatlly appearing on screen
 
         ready: function() {
           this._svg = null;
-          this._observer = new Polymer.FlattenedNodesObserver(this.$.content, (info) => {
-            if (this._svg) {
-              this.stopAnimation();
-              this._svg = null;
+          if (Polymer.Element) {
+            this._observer = new Polymer.FlattenedNodesObserver(
+                this.$.content, this.__nodeChangeHandler.bind(this));
+          } else {
+            this._observer = Polymer.dom(this.$.content).observeNodes(
+                this.__nodeChangeHandler.bind(this));
+          }
+        },
+
+        __nodeChangeHandler: function(info) {
+          if (this._svg) {
+            this.stopAnimation();
+            this._svg = null;
+          }
+          if (info.addedNodes.length == 1) {
+            if (info.addedNodes[0].tagName.toLowerCase() == 'svg') {
+              this.importSvg(info.addedNodes[0]);
+              if (this.auto) this.playAnimation();
             }
-            if (info.addedNodes.length == 1) {
-              if (info.addedNodes[0].tagName.toLowerCase() == 'svg') {
-                this.importSvg(info.addedNodes[0]);
-                if (this.auto) this.playAnimation();
-              }
-            }
-          });
+          }
         },
 
         importSvg: function(node) {
